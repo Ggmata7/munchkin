@@ -1,0 +1,12 @@
+{
+  "name": "munchkin-3d-companion",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/smoke.mjs",
+    "test:quick": "node tests/smoke.mjs --quick"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}
