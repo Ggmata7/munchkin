@@ -189,6 +189,17 @@ input{font-family:inherit}
 .slot.packed .bag{background:#6d28d9;border-color:#ddd6fe;box-shadow:0 0 10px #a855f7}
 .twoh.on{background:#f5c542;border-color:#fff3b0;color:#3a2208;box-shadow:0 0 10px rgba(245,197,66,.8)}
 .slot.wide{width:var(--sw)}
+/* nome flutuando acima da cabeça (a posição vem do 3D a cada quadro) */
+.name-tag{position:absolute;left:50%;top:34px;transform:translate(-50%,0);z-index:3;max-width:72%;padding:3px 12px;border-radius:999px;
+  font-family:'Cinzel',serif;font-weight:700;font-size:15px;line-height:1.35;color:#ffe08a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background:rgba(20,12,7,.74);border:1.5px solid #c9962f;text-shadow:0 2px 0 #000;box-shadow:0 3px 8px rgba(0,0,0,.5);pointer-events:auto;transition:opacity .3s}
+.name-tag.empty{font-family:'Fredoka',sans-serif;font-weight:600;font-size:13px;color:#e8d2a6;opacity:.75}
+.name-tag.gone{opacity:0;pointer-events:none}
+.nm-lb{font-weight:700;font-size:14px;margin:12px 2px 6px;opacity:.9}
+.nm-chips{display:flex;flex-wrap:wrap;gap:6px}
+.nm-chips .badge{height:34px;font-size:14px}
+.nm-chips .badge.sel{border-color:#4ade80;background:linear-gradient(#14532d,#0a2a17);box-shadow:0 0 10px rgba(74,222,128,.4)}
+.nm-hint{font-size:12.5px;opacity:.7;margin:10px 2px 0;line-height:1.35}
 .drag-hint{position:absolute;left:50%;top:6px;transform:translateX(-50%);font-size:11px;opacity:.55;pointer-events:none;z-index:1;white-space:nowrap;transition:opacity 1s}
 
 /* ---------- IDENTIDADE (RAÇA/CLASSE) ---------- */
@@ -427,6 +438,7 @@ html.fit.tr .combat{padding-top:calc(env(safe-area-inset-top) + 28px)}
   <main id="stage">
     <div id="stage3d"><div id="loadErr" class="hidden">⚠️ 3D indisponível neste aparelho.<br>O contador continua funcionando!</div></div>
     <div class="drag-hint" id="dragHint">👆 arraste para girar</div>
+    <button class="name-tag empty" id="nameTag">✏️ Dê um nome</button>
     <div id="lvl9Banner" class="hidden">🐉 Só vence matando monstro!</div>
     <div id="slotLayer">
       <div class="scol l" id="colL"></div>
@@ -552,6 +564,20 @@ html.fit.tr .combat{padding-top:calc(env(safe-area-inset-top) + 28px)}
   </div>
 </div>
 
+<!-- ===== NOME DO PERSONAGEM ===== -->
+<div id="nameOvl" class="ovl hidden">
+  <div class="sheet">
+    <div class="sheet-h"><h3>🏷️ Nome</h3><button class="x-btn" data-close="nameOvl">✕</button></div>
+    <div class="nm-lb">🧙 Nome do personagem</div>
+    <div class="pl"><input id="heroNameIn" maxlength="18" placeholder="Ex.: Sir Batata" autocomplete="off"></div>
+    <div class="nm-lb">👤 Quem é você?</div>
+    <div class="nm-chips" id="meChips"></div>
+    <div class="pl hidden" id="myNameRow" style="margin-top:8px"><span style="padding:0 4px 0 6px">✏️</span><input id="myNameIn" maxlength="16" placeholder="Seu nome" autocomplete="off"></div>
+    <div class="nm-hint">Sem nome de personagem, aparece o seu nome em cima dele. O seu nome é o mesmo do sorteio de 🎲 Duplas.</div>
+    <button class="b3d green" data-close="nameOvl" style="width:100%;height:50px;margin-top:14px;font-size:18px">✔ Pronto</button>
+  </div>
+</div>
+
 <!-- ===== MENU ===== -->
 <div id="menuOvl" class="ovl hidden">
   <div class="sheet">
@@ -630,10 +656,11 @@ const OTHER_ICON = { armor:'🛡️', boots:'🥾', extras:'💍', hireling:'�
 function mountType(cls){ return cls==='wizard' ? 'dragon' : cls==='thief' ? 'panther' : 'horse'; }
 
 const DEFAULT_PLAYERS = [
-  { name:'Eu',         g:'sibling' }, { name:'Irmão 1',  g:'sibling' }, { name:'Irmão 2', g:'sibling' },
-  { name:'Primo 1',    g:'cousin' },  { name:'Primo 2',  g:'cousin' },  { name:'Primo 3', g:'cousin' },
-  { name:'Namorada 1', g:'partner' }, { name:'Namorada 2', g:'partner' }
+  { name:'Jogador 1', g:'sibling' }, { name:'Jogador 2', g:'sibling' }, { name:'Jogador 3', g:'sibling' },
+  { name:'Jogador 4', g:'cousin' },  { name:'Jogador 5', g:'cousin' },  { name:'Jogador 6', g:'cousin' },
+  { name:'Jogador 7', g:'partner' }, { name:'Jogador 8', g:'partner' }
 ];
+const OLD_DEFAULT_NAMES = ['Eu','Irmão 1','Irmão 2','Primo 1','Primo 2','Primo 3','Namorada 1','Namorada 2']; // padrão antigo → Jogador N
 const GROUP_ICON = { sibling:'🧒', cousin:'🤠', partner:'💞' };
 const TEAM_NAMES = ['Saqueadores da Ceia','Paladinos do Espumante','Traidores da Meia-Noite','Senhores da Lentilha',
   'Mercenários do Ano Novo','Irmandade do Pernil','Caçadores de Uva-Passa','Ordem da Taça Dourada'];
@@ -646,7 +673,7 @@ const BIG_KEYS = ['head','armor','boots','hand1','hand2','extras']; // montaria 
 const PLAYERS_MIN = 2, PLAYERS_MAX = 12;
 function freshCombat(){ return { helper:0, mod:0, monster:1, fleeMod:0 }; }
 function freshChar(){ return { level:1, gender:'M', curse:false, races:['human'], classes:['none'], halfBreed:false, superMunchkin:false, twoHanded:false, slots:freshSlots() }; }
-function freshState(){ return Object.assign(freshChar(), { players:clone(DEFAULT_PLAYERS), teams:[], myTeam:null, combat:freshCombat(), epic:false }); }
+function freshState(){ return Object.assign(freshChar(), { players:clone(DEFAULT_PLAYERS), teams:[], myTeam:null, combat:freshCombat(), epic:false, heroName:'', me:-1 }); }
 function loadState(){
   const base = freshState();
   try{
@@ -663,7 +690,9 @@ function loadState(){
     st.level = Math.min(st.epic?20:10, Math.max(1, parseInt(p.level)||1));
     st.combat = Object.assign(freshCombat(), p.combat||{});
     if(!Array.isArray(st.players) || st.players.length<PLAYERS_MIN || st.players.length>PLAYERS_MAX) st.players = clone(DEFAULT_PLAYERS);
-    st.players = st.players.map((p,i)=>({ name:String((p&&p.name)||`Jogador ${i+1}`).slice(0,16), g:GROUP_ICON[p&&p.g]?p.g:'cousin' }));
+    st.players = st.players.map((p,i)=>({ name:String((p&&p.name&&p.name!==OLD_DEFAULT_NAMES[i])?p.name:`Jogador ${i+1}`).slice(0,16), g:GROUP_ICON[p&&p.g]?p.g:'cousin' }));
+    st.heroName = String(p.heroName||'').slice(0,18);
+    st.me = Number.isInteger(p.me) && p.me>=0 && p.me<st.players.length ? p.me : -1;
     return st;
   }catch(e){ return base; }
 }
@@ -999,6 +1028,7 @@ function renderAll(){
   $('#classIco').textContent = S.classes.map(c=>CLASSES[c].i).join('');
   $('#className').textContent = S.classes.map(c=>CLASSES[c].n).join(' + ');
   renderBadges();
+  renderName();
 
   // Dupla
   $('#teamTxt').textContent = S.myTeam ? (S.myTeam.b ? `${S.myTeam.a} & ${S.myTeam.b}` : `${S.myTeam.a} (solo)`) : 'Sem dupla';
@@ -1009,6 +1039,20 @@ function renderAll(){
   save();
 }
 
+/* ----- nome em cima do personagem: o nome dado a ele, ou o nome do jogador ----- */
+function displayName(){ return S.heroName || (S.me>=0 && S.players[S.me] ? S.players[S.me].name : ''); }
+function renderName(){
+  const t=$('#nameTag'), n=displayName();
+  t.textContent = n || '✏️ Dê um nome'; t.classList.toggle('empty', !n);
+}
+function renderNameSheet(){
+  $('#heroNameIn').value = S.heroName;
+  const h=$('#meChips'); h.innerHTML='';
+  S.players.forEach((p,i)=>{ const b=document.createElement('button'); b.className='badge'+(i===S.me?' sel':''); b.textContent=(i===S.me?'✅ ':'')+p.name;
+    b.addEventListener('click',()=>{ buzz(8); S.me = S.me===i ? -1 : i; renderNameSheet(); renderName(); save(); }); h.appendChild(b); });
+  const row=$('#myNameRow'); row.classList.toggle('hidden', S.me<0);
+  if(S.me>=0) $('#myNameIn').value = S.players[S.me].name;
+}
 function visualCfg(){
   return { races:S.races.slice(0,2), classes:S.classes.slice(0,2), gender:S.gender, twoHanded:S.twoHanded, slots:clone(S.slots) };
 }
@@ -2763,6 +2807,7 @@ const Engine = (()=>{
   let renderer, scene, camera, cont, H=null, ghost=null;
   let rotY=0, velY=0, dragging=false, lastX=0, downX=0, downT=0, lastInteract=0, t=0, clock;
   let reactS=null, deadT=0, curSig='', prevItems={}, cfgCache=null;
+  let tagEl=null; const tagV=new THREE.Vector3(); // nome acima da cabeça
   let torch, brazierLight, flames=[], embers, emberData, dust, dustData, aura, auraGlow;
   const camT={d:7,y:1}; const pops=[]; const bursts=[];
   let auraTarget={c:new THREE.Color('#ffcc55'),o:.25}, blinkT=2, blinkPhase=0;
@@ -2877,6 +2922,9 @@ const Engine = (()=>{
     if(sig===curSig) return; curSig=sig;
     const old=H; H=buildHero(cfg); scene.add(H.root); H.root.rotation.y=rotY;
     if(deadT>0) H.root.visible=false;
+    // altura do topo da cabeça (com chapéu/elmo) acima do centro dela, antes da animação de encaixe encolher os itens
+    H.root.updateMatrixWorld(true); const hp=new THREE.Vector3(); H.head.getWorldPosition(hp);
+    H.headTop = new THREE.Box3().setFromObject(H.head).max.y - hp.y + .1;
     if(old){ scene.remove(old.root); dispose(old.root); }
     for(const k in H.items){
       const it=H.items[k];
@@ -2959,6 +3007,12 @@ const Engine = (()=>{
     // câmera
     camera.position.x+=(0-camera.position.x)*.08; camera.position.y+=((camT.y+.5)-camera.position.y)*.08; camera.position.z+=(camT.d-camera.position.z)*.08;
     camera.lookAt(0,camT.y,0);
+    if(!tagEl) tagEl=document.getElementById('nameTag');
+    if(tagEl && H && H.headTop!=null){
+      H.head.getWorldPosition(tagV); tagV.y+=H.headTop; camera.updateMatrixWorld(); tagV.project(camera);
+      tagEl.style.left=((tagV.x*.5+.5)*cont.clientWidth)+'px'; tagEl.style.top=Math.max(34,(-tagV.y*.5+.5)*cont.clientHeight)+'px'; // chapéu muito alto: o nome fica no topo do palco
+      tagEl.style.transform='translate(-50%,-100%)'; tagEl.classList.toggle('gone', deadT>0);
+    }
     renderer.render(scene,camera);
   }
   return { init, update, react, die, setStatus, celebrate, setPaused, ready:false, debug:()=>({H,scene,camera,renderer}) };
@@ -3327,9 +3381,9 @@ function renderPlayers(){
   S.players.forEach((p,i)=>{
     const row=document.createElement('div'); row.className='pl';
     row.innerHTML=`<button class="g" aria-label="Grupo">${GROUP_ICON[p.g]||'🧑'}</button><input maxlength="16" value="">${canRm?'<button class="rm" aria-label="Remover">✕</button>':''}`;
-    if(canRm) row.querySelector('.rm').addEventListener('click',()=>{ S.players.splice(i,1); buzz(8); renderPlayers(); save(); });
+    if(canRm) row.querySelector('.rm').addEventListener('click',()=>{ S.players.splice(i,1); if(S.me===i) S.me=-1; else if(S.me>i) S.me--; buzz(8); renderPlayers(); renderName(); save(); });
     const inp=row.querySelector('input'); inp.value=p.name;
-    inp.addEventListener('input',()=>{ S.players[i].name=inp.value.trim()||`Jogador ${i+1}`; save(); });
+    inp.addEventListener('input',()=>{ S.players[i].name=inp.value.trim()||`Jogador ${i+1}`; if(i===S.me) renderName(); save(); });
     row.querySelector('.g').addEventListener('click',e=>{ const order=['sibling','cousin','partner']; p.g=order[(order.indexOf(p.g)+1)%3]; e.currentTarget.textContent=GROUP_ICON[p.g]; buzz(8); save(); });
     g.appendChild(row);
   });
@@ -3376,7 +3430,7 @@ $('#btnDuplas').addEventListener('click',()=>{ buzz(); renderPlayers(); renderTe
 $('#teamChip').addEventListener('click',()=>{ buzz(); renderPlayers(); renderTeams(false); openOvl('duplasOvl'); });
 $('#drawRandom').addEventListener('click',()=>drawTeams('random'));
 $('#drawMix').addEventListener('click',()=>drawTeams('mix'));
-$('#plReset').addEventListener('click',()=>{ S.players=clone(DEFAULT_PLAYERS); renderPlayers(); save(); });
+$('#plReset').addEventListener('click',()=>{ S.players=clone(DEFAULT_PLAYERS); if(S.me>=S.players.length) S.me=-1; renderPlayers(); renderName(); save(); });
 $('#shareWa').addEventListener('pointerdown',()=>{ $('#shareWa').href='https://wa.me/?text='+encodeURIComponent(teamsText()); });
 $('#shareWa').addEventListener('focus',()=>{ $('#shareWa').href='https://wa.me/?text='+encodeURIComponent(teamsText()); });
 $('#shareCopy').addEventListener('click',async e=>{
@@ -3404,7 +3458,7 @@ $('#coinAgain').addEventListener('click',flipCoin);
 
 /* ---------------- MENU / NOVA PARTIDA ---------------- */
 $('#btnMenu').addEventListener('click',()=>{ buzz(); openOvl('menuOvl'); });
-function newGame(){ const keep={players:S.players,teams:S.teams,myTeam:S.myTeam,epic:S.epic}; S=Object.assign(freshState(),keep); closeOvl('menuOvl'); closeOvl('winOvl'); Engine.react('spin'); renderAll(); toast('🔄 Nova partida! Boa sorte, munchkin!'); }
+function newGame(){ const keep={players:S.players,teams:S.teams,myTeam:S.myTeam,epic:S.epic,heroName:S.heroName,me:S.me}; S=Object.assign(freshState(),keep); closeOvl('menuOvl'); closeOvl('winOvl'); Engine.react('spin'); renderAll(); toast('🔄 Nova partida! Boa sorte, munchkin!'); }
 $('#mNewGame').addEventListener('click',e=>{ const b=e.currentTarget; if(!b.dataset.arm){ b.dataset.arm='1'; b.textContent='⚠️ Toque de novo p/ confirmar'; setTimeout(()=>{ delete b.dataset.arm; b.textContent='🔄 Nova partida'; },2500); return; } delete b.dataset.arm; b.textContent='🔄 Nova partida'; newGame(); });
 $('#mClearItems').addEventListener('click',()=>{ S.slots=freshSlots(); S.twoHanded=false; closeOvl('menuOvl'); renderAll(); toast('🧹 Itens zerados'); });
 $('#winNew').addEventListener('click',newGame);
@@ -3449,6 +3503,11 @@ $('#mEpic').addEventListener('click',()=>{
   renderAll();
 });
 $('#raceBtn').addEventListener('click',()=>{ buzz(); openPicker('race'); });
+$('#nameTag').addEventListener('click',()=>{ buzz(); renderNameSheet(); openOvl('nameOvl'); });
+$('#heroNameIn').addEventListener('input',e=>{ S.heroName=e.target.value.replace(/\s+/g,' ').trimStart().slice(0,18); renderName(); save(); });
+$('#heroNameIn').addEventListener('change',e=>{ S.heroName=S.heroName.trim(); e.target.value=S.heroName; renderName(); save(); });
+$('#myNameIn').addEventListener('input',e=>{ if(S.me<0) return; S.players[S.me].name=e.target.value.trim().slice(0,16)||`Jogador ${S.me+1}`; renderName(); save();
+  const ch=$('#meChips').children[S.me]; if(ch) ch.textContent='✅ '+S.players[S.me].name; });
 $('#classBtn').addEventListener('click',()=>{ buzz(); openPicker('class'); });
 $('#pickTog').addEventListener('click',()=>{
   buzz(); const isR=pickKind==='race';
