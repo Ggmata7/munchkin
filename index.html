@@ -112,9 +112,9 @@ input{font-family:inherit}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes flick{from{opacity:.6;transform:scale(1)}to{opacity:1;transform:scale(1.06)}}
 .stepper{display:flex;gap:8px;margin-top:4px}
-.stepper button{width:32px;height:28px;font-size:20px;line-height:1;border-radius:10px;display:grid;place-items:center}
+.stepper button{width:40px;height:32px;font-size:20px;line-height:1;border-radius:10px;display:grid;place-items:center}
 .gender-row{display:flex;gap:6px;margin-top:4px}
-.gender-row button{height:28px;min-width:34px;padding:0 8px;font-size:14px;line-height:1;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;gap:2px;white-space:nowrap;overflow:hidden}
+.gender-row button{height:32px;min-width:40px;padding:0 8px;font-size:14px;line-height:1;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;gap:2px;white-space:nowrap;overflow:hidden}
 .gender-row button svg{width:17px;height:17px;display:block;flex:none;filter:drop-shadow(0 1px 0 rgba(0,0,0,.6))}
 #btnCurse b{font-size:13px}
 #btnCurse.on{animation:cursePulse 1s infinite}
@@ -149,6 +149,12 @@ input{font-family:inherit}
 .s-val{font-weight:700;font-size:21px;line-height:1;color:rgba(255,255,255,.45);text-shadow:0 2px 0 #000}
 .slot.filled .s-val{color:#ffe08a}
 .s-btns{display:flex;gap:4px}
+/* área de toque maior que o desenho do botão (dedo de verdade, não ponteiro) */
+.s-btns button{position:relative}
+.s-btns button::after{content:'';position:absolute;inset:-10px -2px -12px}
+.corner::after{content:'';position:absolute;inset:-9px}
+.bigc::after{inset:-5px}
+.stepper button::after,.gender-row button::after{content:'';position:absolute;inset:-6px -3px}
 .s-btns button{width:27px;height:24px;border-radius:8px;font-weight:700;font-size:17px;line-height:1;display:grid;place-items:center;
   border:1.5px solid rgba(255,255,255,.25);box-shadow:0 2px 0 rgba(0,0,0,.6);transition:transform .06s}
 .s-btns button:active{transform:translateY(2px);box-shadow:none}
@@ -223,7 +229,7 @@ input{font-family:inherit}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .sheet-h h3{margin:0;font-family:'Cinzel',serif;font-weight:900;font-size:19px;color:#ffd965;text-shadow:0 2px 0 #000}
-.x-btn{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:16px;background:#2a1a0c;border:2px solid #8a6236}
+.x-btn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:16px;background:#2a1a0c;border:2px solid #8a6236}
 .tog{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:14px;background:#24160c;border:2px solid #5c4028;font-weight:600;font-size:14px;width:100%;margin-bottom:10px}
 .tog .sw{margin-left:auto;width:42px;height:24px;border-radius:999px;background:#3a2a1c;position:relative;transition:background .2s}
 .tog .sw::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#d6c3a0;transition:left .2s}
@@ -257,7 +263,7 @@ input{font-family:inherit}
 .f-ctrl{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.3);border-radius:999px;padding:3px 4px}
 .f-ctrl .lb{font-size:18px;width:26px;text-align:center}
 .f-ctrl b{min-width:26px;text-align:center;font-size:18px}
-.f-ctrl button{width:32px;height:32px;border-radius:50%;font-size:18px;display:grid;place-items:center}
+.f-ctrl button{width:38px;height:38px;border-radius:50%;font-size:18px;display:grid;place-items:center}
 .vs-mid{display:flex;align-items:center;justify-content:center}
 .vs-mid span{font-family:'Cinzel',serif;font-weight:900;font-size:26px;color:#ffd965;text-shadow:0 0 14px rgba(255,180,0,.8),0 3px 0 #000;animation:vsPulse 1.2s infinite}
 @keyframes vsPulse{0%,100%{transform:scale(1) rotate(-6deg)}50%{transform:scale(1.15) rotate(6deg)}}
@@ -552,6 +558,7 @@ html.fit.tr .combat{padding-top:calc(env(safe-area-inset-top) + 28px)}
     <div class="sheet-h"><h3>⚙️ Taverna</h3><button class="x-btn" data-close="menuOvl">✕</button></div>
     <div class="menu-list">
       <button class="b3d wood" id="mEpic">🏆 Vitória no Nível 10</button>
+      <button class="b3d wood" id="mSound">🔊 Sons</button>
       <button class="b3d wood" id="mWake">🕯️ Tela sempre acesa</button>
       <button class="b3d wood" id="mClearItems">🧹 Zerar itens</button>
       <button class="b3d red" id="mNewGame">🔄 Nova partida</button>
@@ -688,6 +695,57 @@ function winsNow(){ const d = heroCombat()-S.combat.monster; return d>0 || (d===
 /* ---------------- 3. INTERFACE ---------------- */
 const $ = s => document.querySelector(s);
 const buzz = (ms=12) => { try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){} };
+/* ----- efeitos sonoros sintetizados (Web Audio, sem arquivos: funciona offline) ----- */
+const Sfx = (()=>{
+  let ctx=null, out=null, on=true;
+  try{ on = localStorage.getItem('m3d_sound')!=='0'; }catch(e){}
+  function ac(){
+    if(!ctx){ const C=window.AudioContext||window.webkitAudioContext; if(!C) return null;
+      ctx=new C(); out=ctx.createGain(); out.gain.value=.55; out.connect(ctx.destination); }
+    if(ctx.state==='suspended') ctx.resume().catch(()=>{});
+    return ctx;
+  }
+  // o iPhone só libera o som depois de um toque
+  document.addEventListener('pointerdown',()=>{ if(on) ac(); },{passive:true});
+  function tone(f,t,d,o={}){
+    const {type='triangle',g=.22,to=null,a=.006}=o;
+    const os=ctx.createOscillator(), v=ctx.createGain();
+    os.type=type; os.frequency.setValueAtTime(f,t); if(to) os.frequency.exponentialRampToValueAtTime(to,t+d);
+    v.gain.setValueAtTime(0,t); v.gain.linearRampToValueAtTime(g,t+a); v.gain.exponentialRampToValueAtTime(.0008,t+d);
+    os.connect(v); v.connect(out); os.start(t); os.stop(t+d+.03);
+  }
+  function noise(t,d,g=.18,freq=1800){
+    const n=Math.ceil(ctx.sampleRate*d), buf=ctx.createBuffer(1,n,ctx.sampleRate), ch=buf.getChannelData(0);
+    for(let i=0;i<n;i++) ch[i]=Math.random()*2-1;
+    const src=ctx.createBufferSource(), bp=ctx.createBiquadFilter(), v=ctx.createGain();
+    src.buffer=buf; bp.type='bandpass'; bp.frequency.value=freq; bp.Q.value=1.2;
+    v.gain.setValueAtTime(g,t); v.gain.exponentialRampToValueAtTime(.0008,t+d);
+    src.connect(bp); bp.connect(v); v.connect(out); src.start(t); src.stop(t+d+.02);
+  }
+  const notes=(t,list,step,o)=>list.forEach((f,i)=>tone(f,t+i*step,o&&o.d||.18,o));
+  const SND = {
+    tap:    t=>tone(700,t,.05,{type:'sine',g:.1}),
+    equip:  t=>{ tone(900,t,.1,{type:'square',g:.05}); tone(1350,t+.025,.22,{g:.12}); },
+    unequip:t=>tone(520,t,.12,{g:.12,to:330}),
+    tier:   t=>notes(t,[660,880,1175,1568],.07,{g:.14,d:.3}),
+    up:     t=>notes(t,[523,659,784],.075,{g:.17,d:.22}),
+    down:   t=>tone(392,t,.32,{g:.15,to:220}),
+    dice:   t=>{ [0,.12,.25,.39,.55,.73,.95,1.2].forEach((k,i)=>noise(t+k,.05,.22-i*.02,1400+Math.random()*1600)); },
+    ok:     t=>notes(t,[784,1047],.09,{g:.16,d:.28}),
+    bad:    t=>{ tone(220,t,.45,{type:'sawtooth',g:.09,to:98}); tone(110,t,.5,{type:'sine',g:.2,to:70}); },
+    win:    t=>notes(t,[523,659,784,1047],.085,{g:.16,d:.3}),
+    fanfare:t=>{ notes(t,[392,523,659],.12,{g:.13,d:.25}); [523,659,784,1047].forEach(f=>tone(f,t+.4,1.1,{g:.08})); },
+    coins:  t=>{ for(let i=0;i<6;i++) tone(1800+Math.random()*900,t+i*.07+Math.random()*.03,.12,{type:'sine',g:.06}); },
+    curse:  t=>{ tone(620,t,.6,{type:'sine',g:.12,to:180}); tone(640,t+.05,.6,{type:'sine',g:.08,to:190}); },
+    death:  t=>notes(t,[392,349,311,262],.22,{g:.14,d:.4}),
+    flip:   t=>{ noise(t,.25,.12,3000); tone(1500,t+.15,.12,{type:'sine',g:.06}); }
+  };
+  function play(name){ if(!on || !SND[name]) return; try{ const c=ac(); if(!c) return; SND[name](c.currentTime+.01); }catch(e){} }
+  function label(){ const b=document.getElementById('mSound'); if(!b) return;
+    b.textContent=`🔊 Sons: ${on?'LIGADOS':'DESLIGADOS'}`; b.classList.toggle('green',on); b.classList.toggle('wood',!on); }
+  function toggle(){ on=!on; try{ localStorage.setItem('m3d_sound', on?'1':'0'); }catch(e){} label(); if(on) play('ok'); }
+  return { play, toggle, label, get on(){ return on; } };
+})();
 function slotIcon(k){
   const c = S.classes[0];
   if(k==='head') return HEAD_ICON[c];
@@ -753,7 +811,7 @@ function syncOverlays(){
   try{ Engine.setPaused && Engine.setPaused(PAUSE_OVL.some(isOpen)); }catch(e){}
   if(typeof Dice!=='undefined' && !DICE_OVL.some(isOpen)) Dice.release();
 }
-function openOvl(id){ $('#'+id).classList.remove('hidden'); syncOverlays(); }
+function openOvl(id){ $('#'+id).classList.remove('hidden'); syncOverlays(); if(id==='winOvl') Sfx.play('fanfare'); }
 function closeOvl(id){ $('#'+id).classList.add('hidden'); syncOverlays(); }
 document.addEventListener('click', e=>{
   const c = e.target.closest('[data-close]'); if(c){ closeOvl(c.dataset.close); return; }
@@ -795,17 +853,17 @@ function buildSlots(){
       const was = s.b; s.b++;
       if(!s.on){ s.on = true; }
       floatText(el, `+1 ${slotIcon(k)}`);
-      bumpEl(el,'pulse');
-      if(TIERED(k) && tierOf(s.b)!==tierOf(was)) setTimeout(()=>toast(`✨ ${slotIcon(k)} evoluiu: Grau ${TIER_NAME[tierOf(s.b)]}`),250);
+      bumpEl(el,'pulse'); Sfx.play('equip');
+      if(TIERED(k) && tierOf(s.b)!==tierOf(was)) setTimeout(()=>{ toast(`✨ ${slotIcon(k)} evoluiu: Grau ${TIER_NAME[tierOf(s.b)]}`); Sfx.play('tier'); },250);
       if(was===0) Engine.react('hop'); else Engine.react('nod');
     } else if(act==='dec'){
       if(s.b<=0) return;
       s.b--; if(s.b===0){ s.on=true; s.big=false; if(k==='mount') s.flee=0; }
       floatText(el, `−1 ${slotIcon(k)}`, 'neg');
-      bumpEl(el,'pulse');
+      bumpEl(el,'pulse'); Sfx.play('unequip');
     } else if(act==='bag'){
       if(s.b<=0){ floatText(el,'🎒 vazio','neg'); return; }
-      s.on = !s.on;
+      s.on = !s.on; Sfx.play('tap');
       floatText(el, s.on ? `✔ ${slotIcon(k)}` : `🎒 ${slotIcon(k)}`, s.on?'':'pur');
       Engine.react('nod');
     } else if(act==='big'){
@@ -839,7 +897,7 @@ function changeLevel(d, el){
   }
   const nl = Math.min(maxLevel(), Math.max(1, S.level + d));
   if(nl===S.level) return;
-  S.level = nl;
+  S.level = nl; Sfx.play(d>0?'up':'down');
   floatText($('#medalLevel'), d>0?'+1 ⭐':'−1 ⭐', d>0?'':'neg');
   if(d>0) Engine.react('spin');
   renderAll();
@@ -2977,7 +3035,7 @@ function endCombat(){
 }
 function victory(n){
   if(!winsNow()) return;
-  buzz(30);
+  buzz(30); Sfx.play('win'); setTimeout(()=>Sfx.play('coins'),250);
   const c=S.combat, diff=heroCombat()-c.monster;
   const extra = (hasRace('orc') && c.helper===0 && diff>=10) ? 1 : 0;
   const before=S.level;
@@ -2992,7 +3050,7 @@ function victory(n){
 function died(btn){
   if(!btn.dataset.arm){ btn.dataset.arm='1'; btn.innerHTML='💀 Confirmar?'; btn.classList.add('glow'); setTimeout(()=>{ delete btn.dataset.arm; btn.innerHTML='💀 Morri!'; btn.classList.remove('glow'); },2500); return; }
   delete btn.dataset.arm; btn.innerHTML='💀 Morri!';
-  buzz([40,60,40]);
+  buzz([40,60,40]); Sfx.play('death');
   Engine.die();
   S.slots=freshSlots(); S.twoHanded=false;
   endCombat();
@@ -3003,7 +3061,7 @@ function orcMunch(){
   if(!isEpic() || !hasRace('orc')) return;
   buzz(30);
   S.level = Math.min(maxLevel(), S.level+1);
-  endCombat(); coinRain(24,['🍖','🦴']); Engine.celebrate();
+  endCombat(); coinRain(24,['🍖','🦴']); Engine.celebrate(); Sfx.play('win');
   setTimeout(()=>floatText($('#medalLevel'),'+1 ⭐ 🍖'),150);
   if(S.level>=maxLevel()) setTimeout(()=>{ openOvl('winOvl'); coinRain(70,['🪙','👑','✨','🎉']); Engine.celebrate(); }, 900);
 }
@@ -3149,7 +3207,7 @@ async function rollFlee(){
   renderFleeMods(); renderFleeTrack();
   $('#fleeBtns').innerHTML=''; $('#fleeRes').className='flee-res'; $('#fleeRes').innerHTML='<span style="font-size:18px">🎲 …</span>';
   const v=1+Math.floor(Math.random()*6); flee.lastV=v;
-  await Dice.roll(v,$('#diceHost'));
+  Sfx.play('dice'); await Dice.roll(v,$('#diceHost'));
   flee.rolling=false;
   if(isOpen('fleeOvl')) showFleeResult(true);
 }
@@ -3158,7 +3216,7 @@ function showFleeResult(fresh){
   flee.results[flee.i]=ok; flee.phase='post';
   const res=$('#fleeRes'); res.className='flee-res '+(ok?'ok':'bad');
   res.innerHTML = `<span class="big">${ok?'🥾💨':'💀'}</span><span>${ok?'FUGIU!':'COISA RUIM!'}</span><span style="font-family:Fredoka;font-size:15px;opacity:.9">🎲${v}${base?` ${sgn(base)}`:''}${flee.wiz?` 🧙+${flee.wiz}`:''} = ${total}</span>`;
-  if(fresh || ok){ buzz(ok?[20,40,20]:[80]); if(ok) coinRain(12,['🥾','💨']); }
+  if(fresh || ok){ buzz(ok?[20,40,20]:[80]); Sfx.play(ok?'ok':'bad'); if(ok) coinRain(12,['🥾','💨']); }
   renderFleeMods(); renderFleeTrack(); renderFleeBtns('post',ok);
 }
 function wizardBoost(e){ if(flee.wiz>=3) return; flee.wiz++; buzz(8); floatText(e.currentTarget,'🧙 +1','pur'); showFleeResult(false); }
@@ -3210,14 +3268,14 @@ async function rollWizCurse(){
   if(wizBusy) return; wizBusy=true; buzz(20);
   $('#rollBtns').innerHTML=''; $('#rollRes').className='flee-res'; $('#rollRes').innerHTML='<span style="font-size:18px">🎲 …</span>';
   const v=1+Math.floor(Math.random()*6), m=wizFleeMod(), ok=v+m>=5;
-  await Dice.roll(v,$('#rollHost'));
+  Sfx.play('dice'); await Dice.roll(v,$('#rollHost'));
   wizBusy=false;
   if(!isOpen('rollOvl')) return;
   let note='Nada de maldição pra você';
   if(ok){
-    buzz([20,40,20]); coinRain(12,['🧿','💨']);
+    buzz([20,40,20]); Sfx.play('ok'); coinRain(12,['🧿','💨']);
     if(S.curse){ S.gender=S.gender==='M'?'F':'M'; S.curse=false; curseAt=0; note='Troca de sexo desfeita'; Engine.react('spin'); renderAll(); save(); }
-  } else buzz([80]);
+  } else { buzz([80]); Sfx.play('bad'); }
   const res=$('#rollRes'); res.className='flee-res '+(ok?'ok':'bad');
   res.innerHTML=`<span class="big">${ok?'🧙💨':'🧿'}</span><span>${ok?'ESCAPOU!':'PEGOU…'}</span><span style="font-family:Fredoka;font-size:15px;opacity:.9">🎲${v}${m?` ${sgn(m)}`:''} = ${v+m}${ok?` • ${note}`:''}</span>`;
   rollBtns(ok ? [['✔ OK','green',()=>closeOvl('rollOvl')]]
@@ -3237,16 +3295,16 @@ async function rollSteal(){
   if(stealBusy) return; stealBusy=true; buzz(20);
   $('#rollBtns').innerHTML=''; $('#rollRes').className='flee-res'; $('#rollRes').innerHTML='<span style="font-size:18px">🎲 …</span>';
   const v=1+Math.floor(Math.random()*6), ok=v>=4;
-  await Dice.roll(v,$('#rollHost'));
+  Sfx.play('dice'); await Dice.roll(v,$('#rollHost'));
   stealBusy=false;
   if(!isOpen('rollOvl')) return;
   let note;
-  if(ok){ note='Pegue 1 item pequeno de outro jogador'; buzz([20,40,20]); coinRain(16,['💰','🪙']); }
+  if(ok){ note='Pegue 1 item pequeno de outro jogador'; buzz([20,40,20]); Sfx.play('coins'); coinRain(16,['💰','🪙']); }
   else {
     const before=S.level; S.level=Math.max(1,S.level-1);
     note = S.level<before ? 'Levou uma surra • −1 nível' : 'Levou uma surra (Nível 1 não desce)';
     if(S.level<before) floatText($('#medalLevel'),'−1 ⭐','neg');
-    buzz([80]); renderAll(); save();
+    buzz([80]); Sfx.play('bad'); renderAll(); save();
   }
   const res=$('#rollRes'); res.className='flee-res '+(ok?'ok':'bad');
   res.innerHTML=`<span class="big">${ok?'💰':'🤕'}</span><span>${ok?'ROUBOU!':'PEGO!'}</span><span style="font-family:Fredoka;font-size:15px;opacity:.9">🎲${v} • ${note}</span>`;
@@ -3330,7 +3388,7 @@ $('#shareCopy').addEventListener('click',async e=>{
 /* ---------------- MOEDA DE DESEMPATE ---------------- */
 let coinBusy=false, coinAngle=0;
 function flipCoin(){
-  if(coinBusy) return; coinBusy=true; buzz(20);
+  if(coinBusy) return; coinBusy=true; buzz(20); Sfx.play('flip');
   const a=S.myTeam?S.myTeam.a:'Parceiro 1', b=S.myTeam?S.myTeam.b:'Parceiro 2';
   $('#coinA').textContent=a; $('#coinB').textContent=b; $('#coinResult').textContent='🌀 …';
   const winA=Math.random()<.5;
@@ -3357,7 +3415,7 @@ $('#lvlMinus').addEventListener('click',e=>changeLevel(-1,e.currentTarget));
 $('#btnGender').addEventListener('click',()=>{ buzz(); S.gender=S.gender==='M'?'F':'M'; floatText($('#btnGender'),S.gender==='M'?'♂':'♀'); Engine.react('spin'); renderAll(); });
 let curseAt=0;
 $('#btnCurse').addEventListener('click',()=>{
-  buzz([20,40,20]);
+  buzz([20,40,20]); if(!S.curse) Sfx.play('curse');
   if(!S.curse){
     S.gender=S.gender==='M'?'F':'M'; S.curse=true; curseAt=Date.now();
     toast('⚡ Maldição! Sexo trocado (permanente) • −5 no próximo combate<br><span style="font-size:13px;opacity:.8">Toque de novo em 5s para desfazer</span>',3400);
@@ -3430,6 +3488,8 @@ const Wake = (()=>{
   return { toggle, get active(){ return !!lock; } };
 })();
 $('#mWake').addEventListener('click',()=>{ buzz(); Wake.toggle(); });
+$('#mSound').addEventListener('click',()=>{ buzz(); Sfx.toggle(); });
+Sfx.label();
 
 /* ---------------- INICIALIZAÇÃO ---------------- */
 buildSlots();
