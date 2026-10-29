@@ -1,6 +1,6 @@
 // Munchkin 3D Companion: guarda todos os arquivos no aparelho para jogar sem internet.
 // Ao publicar uma versão nova do app, troque o número abaixo para os aparelhos baixarem a atualização.
-const CACHE = 'munchkin-v9';
+const CACHE = 'munchkin-v10';
 const FILES = [
   './',
   'index.html',

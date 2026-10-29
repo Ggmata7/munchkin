@@ -26,7 +26,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Munchkin">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
 :root{
   color-scheme:dark;
@@ -379,8 +379,8 @@ input{font-family:inherit}
 /* App instalado no iPhone (iOS 26): o 100% da tela vem menor que a tela de verdade e o
    Liquid Glass desfoca a faixa logo abaixo da barra de status. Ajuste só no modo instalado. */
 html.fit,html.fit body,html.fit .ovl{height:var(--app-h)!important;bottom:auto!important}
-html.fit #app{padding-top:calc(env(safe-area-inset-top) + 18px)}
-html.fit .combat{padding-top:calc(env(safe-area-inset-top) + 28px)}
+html.fit.tr #app{padding-top:calc(env(safe-area-inset-top) + 18px)}
+html.fit.tr .combat{padding-top:calc(env(safe-area-inset-top) + 28px)}
 </style>
 </head>
 <body>
@@ -3454,8 +3454,13 @@ if('serviceWorker' in navigator){addEventListener('load',function(){navigator.se
 (function fitStandalone(){
   if(!navigator.standalone) return;
   const root=document.documentElement;
-  const fit=()=>{ const portrait=innerHeight>=innerWidth; const h=Math.max(innerHeight, portrait?screen.height:screen.width);
-    root.style.setProperty('--app-h', h+'px'); root.classList.add('fit'); };
+  // barra de status translúcida (app desenhado por baixo dela): o iOS 26 informa uma altura menor que a tela;
+  // barra sólida: o app começa abaixo dela e a altura informada já está certa
+  const probe=document.createElement('div'); probe.style.cssText='position:fixed;top:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top)';
+  document.body.appendChild(probe);
+  const fit=()=>{ const under=probe.offsetHeight>0, portrait=innerHeight>=innerWidth;
+    const h=under ? Math.max(innerHeight, portrait?screen.height:screen.width) : innerHeight;
+    root.style.setProperty('--app-h', h+'px'); root.classList.add('fit'); root.classList.toggle('tr', under); };
   fit(); addEventListener('resize',fit); addEventListener('orientationchange',()=>setTimeout(fit,350));
 })();
 </script>
