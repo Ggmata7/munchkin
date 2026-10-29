@@ -3566,7 +3566,7 @@ setTimeout(()=>{ const h=$('#dragHint'); if(h) h.style.opacity=0; }, 6000);
 document.addEventListener('visibilitychange',()=>{ if(document.hidden) try{ localStorage.setItem(STORE, JSON.stringify(S)); }catch(e){} });
 </script>
 <script>
-if('serviceWorker' in navigator){addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(e){console.warn('SW',e)})})}
+if('serviceWorker' in navigator){addEventListener('load',function(){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(function(e){console.warn('SW',e)})})}
 </script>
 <script>
 /* modo instalado (Tela de Início): ocupa a tela inteira, até embaixo */
