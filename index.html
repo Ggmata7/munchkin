@@ -3273,10 +3273,11 @@ const Dice = (()=>{
     const mats=vals.map(v=>new THREE.MeshPhysicalMaterial({map:pipsTex(v),roughness:.35,clearcoat:.8,clearcoatRoughness:.2}));
     cube=new THREE.Mesh(new THREE.BoxGeometry(1.25,1.25,1.25,1,1,1),mats); sc.add(cube);
     const E=(x,y,z)=>new THREE.Quaternion().setFromEuler(new THREE.Euler(x,y,z));
-    const tilt=E(.38,-.42,0);
-    FACE_Q[1]=tilt.clone().multiply(E(0,0,0)); FACE_Q[6]=tilt.clone().multiply(E(0,PI,0));
-    FACE_Q[3]=tilt.clone().multiply(E(0,-PI/2,0)); FACE_Q[4]=tilt.clone().multiply(E(0,PI/2,0));
-    FACE_Q[2]=tilt.clone().multiply(E(PI/2,0,0)); FACE_Q[5]=tilt.clone().multiply(E(-PI/2,0,0));
+    // o valor que conta é a face de CIMA: leva a face sorteada para +Y e inclina o topo para a câmera
+    const view=E(.62,0,0).multiply(E(0,-.6,0));
+    FACE_Q[1]=view.clone().multiply(E(-PI/2,0,0)); FACE_Q[6]=view.clone().multiply(E(PI/2,0,0));
+    FACE_Q[3]=view.clone().multiply(E(0,0,PI/2)); FACE_Q[4]=view.clone().multiply(E(0,0,-PI/2));
+    FACE_Q[2]=view.clone().multiply(E(0,0,0)); FACE_Q[5]=view.clone().multiply(E(PI,0,0));
     cube.quaternion.copy(FACE_Q[5]); r.render(sc,cam);
   }
   function roll(v, host){
