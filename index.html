@@ -1325,8 +1325,16 @@ TEXB.dscale = function(){
 function heraldTex(kind){
   const key='her_'+kind; if(TX[key]) return TX[key];
   const c=cnv(256), g=c.getContext('2d');
-  if(kind==='warrior'){ g.fillStyle='#a3171b'; g.fillRect(0,0,256,256); g.fillStyle='#f0b429'; g.fillRect(0,0,128,128); g.fillRect(128,128,128,128);
-    g.fillStyle='#e6e9ef'; g.beginPath(); g.moveTo(128,34); g.lineTo(141,62); g.lineTo(137,176); g.lineTo(119,176); g.lineTo(115,62); g.closePath(); g.fill(); g.fillStyle='#3a2208'; g.fillRect(88,172,80,13); g.fillRect(121,185,14,34); }
+  if(kind==='warrior'){ // brasão imperial: águia dourada coroada em campo carmesim
+    g.fillStyle='#8e1418'; g.fillRect(0,0,256,256); g.strokeStyle='#f0b429'; g.lineWidth=14; g.strokeRect(7,7,242,242);
+    g.fillStyle='#f0b429';
+    [-1,1].forEach(s=>{ const X=x=>128+s*(x-128); g.beginPath(); g.moveTo(X(124),104); g.lineTo(X(34),66); g.lineTo(X(50),92); g.lineTo(X(30),102); g.lineTo(X(54),120); g.lineTo(X(38),132); g.lineTo(X(64),146); g.lineTo(X(118),142); g.closePath(); g.fill(); });
+    g.beginPath(); g.ellipse(128,128,22,46,0,0,TAU); g.fill();
+    g.beginPath(); g.moveTo(110,166); g.lineTo(128,212); g.lineTo(146,166); g.closePath(); g.fill();
+    g.beginPath(); g.arc(128,80,16,0,TAU); g.fill();
+    g.beginPath(); g.moveTo(140,76); g.lineTo(156,84); g.lineTo(140,90); g.closePath(); g.fill();
+    g.fillRect(114,54,28,9); [114,124,134].forEach(x=>{ g.beginPath(); g.moveTo(x,54); g.lineTo(x+4,42); g.lineTo(x+8,54); g.closePath(); g.fill(); });
+    g.fillStyle='#3a0608'; g.beginPath(); g.arc(133,78,3,0,TAU); g.fill(); }
   else if(kind==='cleric'){ g.fillStyle='#f4f0e6'; g.fillRect(0,0,256,256); g.fillStyle='#d9a521'; g.fillRect(110,30,36,196); g.fillRect(52,82,152,36); }
   else if(kind==='dwarf'){ g.fillStyle='#4a4f57'; g.fillRect(0,0,256,256); g.fillStyle='#d9a521'; g.fillRect(70,120,116,28); g.fillRect(100,148,56,50); g.beginPath(); g.moveTo(186,120); g.lineTo(220,108); g.lineTo(186,140); g.fill(); }
   else { g.fillStyle='#2e6b34'; g.fillRect(0,0,256,256); g.fillStyle='#f2ead6'; g.beginPath(); g.moveTo(0,200); g.lineTo(128,70); g.lineTo(256,200); g.lineTo(256,160); g.lineTo(128,30); g.lineTo(0,160); g.closePath(); g.fill(); }
@@ -1474,7 +1482,7 @@ function raceMix(list){
   return { list:L, r0:L[0], r1:L[1]||L[0], mix, rc, has:r=>L.includes(r), k:r=>L.includes(r)?(mix?.72:1):0 };
 }
 const OUTFIT = {
-  none:   { top:()=>Mt.cloth('#6f7a3c'), sleeve:()=>Mt.cloth('#6f7a3c'), pants:()=>Mt.leather('#5b3d27'), skirt:'tunic', skirtM:()=>Mt.cloth('#6f7a3c',true) },
+  none:   { top:()=>Mt.cloth('#c9b38a'), sleeve:()=>Mt.cloth('#c9b38a'), pants:()=>Mt.cloth('#6b5238'), skirt:'tunic', skirtM:()=>Mt.cloth('#8a6a44',true) }, // camponês: camisa de linho, calça de lã
   warrior:{ top:()=>Mt.chain(), sleeve:()=>Mt.chain(), pants:()=>Mt.leather('#3a2a20'), skirt:'tunic', skirtM:()=>Mt.chain(true) },
   wizard: { top:()=>Mt.cloth('#35288a'), sleeve:()=>Mt.cloth('#35288a',true), pants:()=>Mt.cloth('#24195e'), skirt:'robe', skirtM:()=>Mt.cloth('#35288a',true) },
   cleric: { top:()=>Mt.cloth('#f3eee2'), sleeve:()=>Mt.cloth('#f3eee2',true), pants:()=>Mt.cloth('#e6dfcf'), skirt:'robe', skirtM:()=>Mt.cloth('#f3eee2',true) },
@@ -1872,7 +1880,7 @@ function buildOutfitExtras(torso,W,cls,ctx,R,armorOn,ZF,accent){
   if(cls==='warrior'){
     if(accent){ add(torso,G.cyl(.262*W,.262*W,.07,24,true),Mt.cloth('#9e1b1f',true),[0,.36,0],[0,0,.55],[1.05,1,.85]); }
     else {
-      const tab=sm('crest',{map:tx('crest'),roughness:.8,side:DS()});
+      const tab=sm('crestImp',{map:heraldTex('warrior'),roughness:.8,side:DS()});
       add(torso,G.cyl(.272*W,.315*W,.64,16,true,-.55,1.1),tab,[0,.19,0],null,[1,1,.83]);
       add(torso,G.cyl(.272*W,.315*W,.64,16,true,PI-.55,1.1),Mt.cloth('#8e1418',true),[0,.19,0],null,[1,1,.83]);
       [-1,1].forEach(s=>add(torso,G.sph(.035,10,8),Mt.gold(),[s*.15*W,.53,.18*W*ZF]));
@@ -1911,8 +1919,11 @@ function buildOutfitExtras(torso,W,cls,ctx,R,armorOn,ZF,accent){
     if(!accent){ add(torso,G.box(.075,.86,.02),Mt.cloth('#16786e'),[0,.3,zf(.3)*ZF+.01],[0,0,.78]); add(torso,G.sph(.03,10,8),Mt.gold(),[-.13*W,.47,zf(.47)*ZF+.01]); }
   }
   if(cls==='none'){
-    if(!accent) add(torso,G.box(.045,.72,.018),Mt.leather('#4a2c14'),[0,.33,zf(.33)*ZF],[0,0,-.62]);
-    const pouch=grp(torso,[(accent?-.2:.2)*W,.02,.13*W],[0,accent?-.7:.7,0]); add(pouch,G.box(.09,.1,.05),Mt.leather('#6b3f1f')); add(pouch,G.box(.095,.04,.055),Mt.leather('#4a2c14'),[0,.035,0]);
+    if(!accent){ add(torso,G.box(.045,.72,.018),Mt.leather('#4a2c14'),[0,.33,zf(.33)*ZF],[0,0,-.62]); add(torso,G.tor(surfR(W,fem,.05)*1.08+.01,.014,6,40),Mt.plain('#a08a5a',.9),[0,.05,0],[PI/2,0,0],[1,.85,1]); } // alça e cinto de corda
+    // bolsa de couro do camponês (alforje no quadril)
+    const bag=grp(torso,[(accent?-.24:.24)*W,-.02,.12*W],[0,accent?-.75:.75,0]);
+    add(bag,G.box(.15,.14,.06),Mt.leather('#6b3f1f')); add(bag,G.sph(.075,12,8,0,TAU,PI*.5,PI*.5),Mt.leather('#6b3f1f'),[0,-.07,0],null,[1,.5,.4]);
+    add(bag,G.box(.155,.07,.066),Mt.leather('#4a2c14'),[0,.045,.002]); add(bag,G.box(.025,.025,.012),Mt.brass(),[0,.02,.036]);
   }
   if(accent) return;
   // raça
@@ -1947,8 +1958,9 @@ function buildBoots(foot,t,rc,cls,ctx){
     if(F==='arcane') add(g,G.cone(.035,.16,8),lea,[0,-.01,.26],[1.25,0,0]);
     return g;
   }
-  const plated = (F==='steel'||F==='holy') && t>=3;
-  if(F==='steel'||F==='holy'){
+  const plated = cls!=='none' && (F==='steel'||F==='holy') && t>=3;
+  if(cls==='none') bootsPeasant(g,t,f,ctx,cls,shaft,shoe,sole,band);
+  else if(F==='steel'||F==='holy'){
     shaft(lea,.26); shoe(t>=4?mm:lea); sole();
     add(g,G.cyl(.14,.108,.08,18,true),Mt.leather('#4f2c14',true),[0,.25,0]);
     if(t===2){ buckle(.06,Mt.iron()); buckle(.15,Mt.iron()); }
@@ -2000,7 +2012,7 @@ function buildBoots(foot,t,rc,cls,ctx){
 /* ---------- 🪖 CABEÇA ---------- */
 function buildHeadgear(cls,R,t,ctx){
   const g=new THREE.Group();
-  ({none:hgSteel,warrior:hgSteel,wizard:hgWizard,cleric:hgCleric,thief:hgThief,bard:hgBard}[cls]||hgSteel)(g,R,t,ctx,cls);
+  ({none:hgPeasant,warrior:hgSteel,wizard:hgWizard,cleric:hgCleric,thief:hgThief,bard:hgBard}[cls]||hgSteel)(g,R,t,ctx,cls);
   return g;
 }
 function plume(par,n,len,mat,p,spread=1){
@@ -2009,15 +2021,15 @@ function plume(par,n,len,mat,p,spread=1){
   return pl;
 }
 function hgSteel(g,R,t,ctx,cls){
-  const race=ctx.race, RX=ctx.RX, mm=metQ(t,cls,race), tr=trimQ(t,cls), hl=grp(g,[0,.24*R,0]), gc=ctx.glow;
+  const race=ctx.race, RX=ctx.RX, mm=(cls==='warrior'&&t===1)?Mt.iron():metQ(t,cls,race), tr=trimQ(t,cls), hl=grp(g,[0,.24*R,0]), gc=ctx.glow;
   const plumeM = Mt.cloth(cls==='warrior'?'#b3191f':'#2e7d32',true);
-  if(t===1){
+  if(t===1 && cls!=='warrior'){
     add(hl,G.sph(R*1.1,30,14,0,TAU,0,PI*.5),Mt.leather('#6b3f1f'),null,null,[1,1,1.03]);
     add(hl,G.tor(R*1.09,.06*R,8,40),Mt.leather('#4a2a14'),null,[PI/2,0,0]);
     for(let i=0;i<4;i++) add(hl,G.tor(R*1.1,.025*R,6,24,PI),Mt.leather('#3b2414'),[0,0,0],[0,i*PI/4,0]);
   } else {
     const top=(t>=3?1.22:1.08)*R + (t>=5?.06*R:0);
-    const prof = t===2
+    const prof = t<=2
       ? [[1.13*R,-.02*R],[1.14*R,.12*R],[1.06*R,.5*R],[.82*R,.86*R],[.45*R,1.04*R],[0,1.1*R]]
       : [[1.13*R,-.02*R],[1.14*R,.12*R],[1.08*R,.42*R],[.93*R,.74*R],[.66*R,.98*R],[.34*R,top*.97],[0,top]];
     const dome=add(hl,G.lathe(prof,44),mm,null,null,[1,1,1.04]);
@@ -2031,11 +2043,15 @@ function hgSteel(g,R,t,ctx,cls){
       add(hl,G.box(.06*R,.06*R,.1*R),tr,[0,.02*R,1.18*R]);
     }
     if(t>=4){ const ph=grp(hl,[0,top-.02*R,-.1*R]); add(ph,G.cyl(.07*R,.1*R,.18*R,12),tr); plume(ph,t>=5?7:5,(.7+t*.07)*R,plumeM,[0,.08*R,0],1); }
+    if(cls==='warrior' && t>=5){ // coroa imperial na testa do elmo
+      const cr=grp(hl,[0,.12*R,0]); add(cr,G.cyl(1.17*R,1.17*R,.13*R,44,true),tr,null,null,[1,1,1.04]);
+      for(let i=0;i<12;i++){ const a=i/12*TAU; if(Math.abs(Math.sin(a))>.9) continue; add(cr,G.cone(.06*R,.2*R,6),tr,[Math.sin(a)*1.17*R,.15*R,Math.cos(a)*1.21*R]); if(i%3===0) gem(cr,[Math.sin(a)*1.19*R,0,Math.cos(a)*1.23*R],'#b3191f',.035*R); }
+    }
     if(t>=5){ const crest=shp([[-.95*R,0],[-.7*R,.16*R],[0,.24*R],[.7*R,.16*R],[.95*R,0]]); const c=grp(hl,[0,top*.82,0],[0,PI/2,0]); add(c,sharp(crest,.03*R,.012*R),tr,null,[0,0,0]); gem(hl,[0,.1*R,1.2*R],gc,.08*R); }
     if(t>=6){
       if(RX.has('dwarf')||RX.has('orc')){ const hm=RX.has('orc')?Mt.ivory():tr; [-1,1].forEach(s=>{ const hg=grp(hl,[s*.92*R,.26*R,-.05*R]); horn(hg,s,R,t>=7,hm); }); }
       else if(RX.has('elf')){ [-1,1].forEach(s=>{ const w=grp(hl,[s*1.0*R,.3*R,-.1*R],[0,-s*.4,s*.25]); for(let i=0;i<4;i++) add(w,leafGeo(),Mt.goldDS(),[s*i*.12*R,i*.1*R,-i*.02*R],[0,0,-s*(.8-i*.15)],R*(1.3+i*.2)); }); }
-      else if(t>=7) [-1,1].forEach(s=>fwing(hl,s,R*.82,sm('wingW'+cls+t,{color:'#fff3d6',metalness:.85,roughness:.3,map:tx('brushed'),side:DS(),envMapIntensity:2.4}),[s*1.0*R,.42*R,-.3*R],[0,-s*1.05,s*.1],6,tr,.13));
+      else if(t>=7 || cls==='warrior') [-1,1].forEach(s=>fwing(hl,s,R*.82,sm('wingW'+cls+t,{color:'#fff3d6',metalness:.85,roughness:.3,map:tx('brushed'),side:DS(),envMapIntensity:2.4}),[s*1.0*R,.42*R,-.3*R],[0,-s*1.05,s*.1],6,tr,.13));
     }
     if(t>=7){ add(hl,G.tor(R*1.085,.022*R,6,48),inl('#ffd56a',gc,.85),[0,.36*R,0],[PI/2,0,0],[1,1.04,1]); auraOn(dome,gc,.01); }
   }
@@ -2180,7 +2196,7 @@ function tabardOn(par,W,fem,mat,y0=-.25,y1=.55,wd=.3){
 }
 function buildArmor(cls,W,t,ctx){
   const g=new THREE.Group();
-  ({none:arSteel,warrior:arSteel,wizard:arWizard,cleric:arCleric,thief:arThief,bard:arBard}[cls]||arSteel)(g,W,t,ctx,cls);
+  ({none:arPeasant,warrior:arSteel,wizard:arWizard,cleric:arCleric,thief:arThief,bard:arBard}[cls]||arSteel)(g,W,t,ctx,cls);
   return g;
 }
 function mkShell(g,W,fem,mat,y0,y1,k){ const m=add(g,shellGeo(W,fem,k,y0,y1),mat,null,null,[1,1,.85]); shellBust(g,W,fem,mat,k); return m; }
@@ -2191,10 +2207,12 @@ function arSteel(g,W,t,ctx,cls){
     const qm=Mt.cloth('#b9a47c'); mkShell(g,W,fem,qm,-.04,.64,.06);
     for(let i=0;i<6;i++){ const y=.02+i*.1; add(g,G.tor(surfR(W,fem,y)*1.07+.008,.01,6,40),Mt.cloth('#9c8862'),[0,y,0],[PI/2,0,0],[1,.85,1]); }
     add(g,G.tor(.16*W,.035,8,28),qm,[0,.63,0],[PI/2,0,0],[1,.85,1]);
+    if(cls==='warrior') tabardOn(g,W,fem,sm('tab'+cls,{map:heraldTex(RX.has('dwarf')?'dwarf':cls),roughness:.8,side:DS()}),-.24,.58,.26);
     return;
   }
   if(t===2){
-    const lm=Mt.leather('#6b3f1f'); mkShell(g,W,fem,lm,.04,.62,.08);
+    const lm=cls==='warrior'?Mt.chain():Mt.leather('#6b3f1f'); mkShell(g,W,fem,lm,.04,.62,.08);
+    if(cls==='warrior') tabardOn(g,W,fem,sm('tab'+cls,{map:heraldTex(RX.has('dwarf')?'dwarf':cls),roughness:.8,side:DS()}),-.24,.58,.27);
     for(let r=0;r<4;r++) for(let c=-2;c<=2;c++){ const y=.14+r*.12, a=c*.32; const rr=surfR(W,fem,y)*1.09+.01; add(g,G.sph(.014,6,6),Mt.iron(),[Math.sin(a)*rr,y,Math.cos(a)*rr*.85]); }
     [-1,1].forEach(s=>pauldron(g,s,W,lm,Mt.leather('#3b2414'),1,.9));
     return;
@@ -2213,7 +2231,9 @@ function arSteel(g,W,t,ctx,cls){
   [-1,1].forEach(s=>{ const pd=pauldron(g,s,W,mm,tr,lames,big);
     if(t>=6){ add(pd,G.tor(.11,.014,6,24,PI),tr,[0,.1,0],[0,PI/2,0],[1,1,1.1]); gem(pd,[0,.14,.12],ctx.glow,.018); }
   });
-  if(t>=5){ motifs(g,RX,[0,.42,surfR(W,fem,.42)*(1+inf)*.85+.03],1.2,null,t); capeOn(g,P,W,t>=6?.95:.6,Mt.cloth(CAPE[cls],true),{top:.63}); }
+  if(cls==='warrior' && t===3) tabardOn(g,W,fem,sm('tab'+cls,{map:heraldTex(RX.has('dwarf')?'dwarf':cls),roughness:.8,side:DS()}),-.28,.2,.26);
+  if(t>=5) motifs(g,RX,[0,.42,surfR(W,fem,.42)*(1+inf)*.85+.03],1.2,null,t);
+  if(t>=5 || (cls==='warrior' && t>=4)) capeOn(g,P,W,t>=6?.95:.6,Mt.cloth(CAPE[cls],true),{top:.63});
   if(t>=6){ gem(g,[0,.5,surfR(W,fem,.5)*(1+inf)*.85+.04],gc,.035); add(g,G.box(.6*W,.03,.04),tr,[0,.64,-.2*W]); }
   if(t>=7){ auraOn(cu,gc,.012); }
 }
@@ -2302,7 +2322,8 @@ function arBard(g,W,t,ctx,cls){
 /* Super Munchkin: a 2ª classe aparece por cima da armadura */
 function armorAccent(g,cls,W,t,ctx){
   const fem=ctx.fem, P=ctx.P, tr=trimQ(Math.max(3,t),cls), cz=y=>surfR(W,fem,y)*.86+.05;
-  if(cls==='warrior'||cls==='none'){ [-1,1].forEach(s=>pauldron(g,s,W,metQ(Math.max(2,t),cls,ctx.race),tr,t>=4?2:1,.92)); }
+  if(cls==='warrior'){ [-1,1].forEach(s=>pauldron(g,s,W,metQ(Math.max(2,t),cls,ctx.race),tr,t>=4?2:1,.92)); }
+  if(cls==='none'){ [-1,1].forEach(s=>pauldron(g,s,W,leaQ(Math.max(2,t),cls),Mt.leather('#2a1a10'),1,.88)); }
   if(cls==='wizard'){ add(g,G.lathe([[.18*W,.72],[.28*W,.64],[.37*W,.54]],36),Mt.cloth('#241a66',true),null,null,[1,1,.9]); add(g,G.tor(.37*W,.012,6,40),tr,[0,.54,0],[PI/2,0,0],[1,.9,1]); for(let i=0;i<5;i++){ const a=(i-2)*.4; add(g,starGeo(),tr,[Math.sin(a)*.36*W,.56,Math.cos(a)*.36*W*.9],[0,a,0],.02); } }
   if(cls==='cleric'){ [-1,1].forEach(s=>add(g,G.cyl(.27*W,.3*W,.72,4,true,s*.2-.07,.14),sm('stole',{color:'#e0b043',roughness:.6,metalness:.3,map:tx('fabric'),side:DS()}),[0,.2,0],null,[1.14,1,.95])); emblem(g,'cleric',[0,.5,cz(.5)],1.4,tr); }
   if(cls==='thief'){ capeOn(g,P,W,.6,Mt.cloth('#1a191c',true),{top:.65,w:.42,tatter:true,seed:7}).position.x=-.12*W; add(g,G.box(.04,.72,.014),Mt.leather('#0f0c0c'),[0,.33,cz(.33)],[0,0,.62]); throwingKnife(g,[.08*W,.42,cz(.42)+.01],[0,0,.62],tr,1.1); }
@@ -2611,6 +2632,7 @@ function W_main(cls,t,ctx){
     case 'cleric': return W_mace(t,ctx);
     case 'thief':  return W_dagger(t,ctx,false);
     case 'bard':   return W_instrument(t,ctx,false);
+    case 'none':   return W_woodAxe(t,ctx,false);
     default:       return steelMain(t,ctx,cls,false);
   }
 }
@@ -2619,6 +2641,7 @@ function W_off(cls,t,ctx){
     case 'wizard': return W_orb(t,ctx);
     case 'thief':  return W_dagger(t,ctx,true);
     case 'bard':   return W_tamb(t,ctx);
+    case 'none':   return W_buckler(t,ctx);
     default:       return W_shield(t,ctx,cls);
   }
 }
@@ -2626,8 +2649,112 @@ function W_twoHand(cls,t,ctx){
   switch(cls){
     case 'wizard': return W_wiz(t,ctx,true);
     case 'cleric': return W_hammer(t,ctx);
+    case 'none':   return W_woodAxe(t,ctx,true);
     default:       return steelMain(t,ctx,cls,true);
   }
+}
+
+/* ---------- 🪓 SEM CLASSE: camponês / lenhador (roupa comum, bolsa e machado de lenhador) ---------- */
+// cor de pano por grau: começa simples e vai ficando mais robusto, sem virar armadura de cavaleiro
+const FUR = ['','#8a6a4a','#8a6a4a','#7a5a3a','#6e4f33','#64462c','#5a3f27','#4f3822'];
+function hgPeasant(g,R,t,ctx,cls){
+  const RX=ctx.RX, hl=grp(g,[0,.24*R,0]), gc=ctx.glow, mm=metQ(t,cls,ctx.race), tr=trimQ(t,cls);
+  if(t===1){ // gorro de lã
+    add(hl,G.sph(R*1.09,28,12,0,TAU,0,PI*.5),Mt.cloth('#7a5a3a'),null,null,[1,1.05,1.03]);
+    add(hl,G.tor(R*1.08,.09*R,8,40),Mt.cloth('#6a4c30'),[0,.02*R,0],[PI/2,0,0],[1,1.03,1]);
+    add(hl,G.sph(.16*R,10,8),Mt.cloth('#6a4c30'),[0,1.12*R,0]);
+  } else if(t===2){ // chapéu de palha
+    const st=Mt.cloth('#cfae5e',true);
+    add(hl,G.cyl(R*1.95,R*1.95,.05*R,40),st,[0,.04*R,0]);
+    add(hl,G.cyl(R*.92,R*1.1,.62*R,32),st,[0,.34*R,0]);
+    add(hl,G.cyl(R*1.11,R*1.11,.14*R,32,true),Mt.leather('#5a3218',true),[0,.13*R,0]);
+  } else if(t===3){ // gorro de couro com abas de pele (lenhador)
+    add(hl,G.sph(R*1.1,30,14,0,TAU,0,PI*.5),leaQ(t,cls),null,null,[1,1.02,1.03]);
+    add(hl,G.tor(R*1.1,.13*R,8,40),Mt.hair(FUR[t]),[0,.02*R,0],[PI/2,0,0],[1,1.03,1]);
+    [-1,1].forEach(s=>add(hl,G.sph(.32*R,14,10),Mt.hair(FUR[t]),[s*1.02*R,-.3*R,.05*R],null,[.45,1,.8]));
+  } else { // chapéu de ferro (chapel de fer) — o elmo do camponês da milícia
+    const dome=add(hl,G.sph(R*1.12,32,14,0,TAU,0,PI*.5),mm,null,null,[1,1.05,1.03]);
+    const brimR=R*(1.55+(t-4)*.06);
+    add(hl,G.lathe([[R*1.08,.06*R],[brimR,-.14*R],[brimR+.02*R,-.18*R],[R*1.08,.0]],40),mm);
+    add(hl,G.tor(brimR,.035*R,6,48),t>=5?tr:Mt.iron(),[0,-.16*R,0],[PI/2,0,0]);
+    add(hl,G.tor(R*1.1,.05*R,6,40),t>=5?tr:Mt.leather('#3b2414'),[0,.04*R,0],[PI/2,0,0],[1,1.03,1]);
+    for(let i=0;i<12;i++){ const a=i/12*TAU; add(hl,G.sph(.04*R,6,6),t>=5?tr:Mt.iron(),[Math.sin(a)*1.13*R,.04*R,Math.cos(a)*1.16*R]); }
+    if(t>=5) add(hl,G.box(.06*R,1.05*R,.06*R),tr,[0,.55*R,.42*R],[-.9,0,0]); // nervura
+    if(t>=6){ const f=add(hl,featherGeo(.9*R,.2*R),Mt.cloth('#7a4a22',true),[.85*R,.3*R,-.2*R],[0,PI/2,-.5]); add(hl,G.tor(R*1.13,.07*R,8,40),Mt.hair(FUR[t]),[0,-.02*R,0],[PI/2,0,0],[1,1.03,1]); }
+    if(t>=7){ add(hl,G.tor(R*1.11,.02*R,6,48),inl('#ffd56a',gc,.75),[0,.3*R,0],[PI/2,0,0],[1,1.05,1]); auraOn(dome,gc,.01); }
+  }
+  if(t>=3) motifs(hl,RX,[0,.12*R,1.15*R],R*1.2,null,t);
+  if(RX.has('gnome') && t>=2){ [-1,1].forEach(s=>{ const gg=grp(hl,[s*.25*R,.42*R,1.02*R],[-.4,0,0]); add(gg,G.cyl(.16*R,.16*R,.11*R,16),Mt.brass(),null,[PI/2,0,0]); add(gg,G.cyl(.12*R,.12*R,.12*R,16),pm('lens',{color:'#9fe3ff',roughness:0,metalness:.2,clearcoat:1,transparent:true,opacity:.6,emissive:'#215a75',emissiveIntensity:.4}),null,[PI/2,0,0]); }); }
+}
+function arPeasant(g,W,t,ctx,cls){
+  const fem=ctx.fem, RX=ctx.RX, P=ctx.P, gc=ctx.glow, inf=RX.has('dwarf')?.12:.08;
+  const ring=(y,mat,th=.012)=>add(g,G.tor(surfR(W,fem,y)*(1.1+inf)+.01,th,6,40),mat,[0,y,0],[PI/2,0,0],[1,.85,1]);
+  if(t===1){ // colete acolchoado
+    const qm=Mt.cloth('#8a7350'); mkShell(g,W,fem,qm,.0,.62,.06);
+    for(let i=0;i<5;i++) ring(.06+i*.11,Mt.cloth('#6e5a3c'),.009);
+    return;
+  }
+  // gibão de couro (a partir do II)
+  const lea=leaQ(Math.min(7,t+1),cls), shell=mkShell(g,W,fem,lea,t>=4?-.06:.02,.63,inf+.01);
+  const lz=y=>surfR(W,fem,y)*(1+inf)*.85+.02;
+  for(let i=0;i<4;i++){ const y=.18+i*.1; [-1,1].forEach(s=>add(g,G.box(.05,.012,.012),Mt.leather('#2a1a10'),[s*.012,y,lz(y)],[0,0,s*.5])); } // cordão
+  ring(.06,Mt.leather('#2a1a10'),.02); // cinto
+  add(g,G.box(.05,.04,.02),t>=5?trimQ(t,cls):Mt.iron(),[0,.06,lz(.06)+.01]);
+  if(t>=3) add(g,G.tor(.2*W,.065,8,30),Mt.hair(FUR[t]),[0,.62,0],[PI/2,0,0],[1,.85,1]); // gola de pele
+  if(t>=4){ // brigantina de couro rebitado + ombreiras de couro
+    const rv=t>=5?trimQ(t,cls):Mt.iron();
+    for(let r=0;r<4;r++) for(let c=-3;c<=3;c++){ if(c===0) continue; const y=.16+r*.1, a=c*.27, rr=surfR(W,fem,y)*(1.1+inf)+.012; add(g,G.sph(.012,6,6),rv,[Math.sin(a)*rr,y,Math.cos(a)*rr*.85]); }
+    [-1,1].forEach(s=>pauldron(g,s,W,leaQ(t,cls),Mt.leather('#2a1a10'),t>=6?2:1,.88));
+  }
+  if(t>=5) capeOn(g,P,W,t>=6?.9:.6,Mt.cloth('#5a4128',true),{top:.63,seed:11}); // capa de lã
+  if(t>=6){ const mm=metQ(t,cls,ctx.race); [.24,.36].forEach(y=>ring(y,mm,.02)); } // faixas de ferro
+  if(t>=7){ ring(.48,inl('#ffd56a',gc,.75),.014); auraOn(shell,gc,.012); }
+  if(t>=5) motifs(g,RX,[0,.44,lz(.44)+.02],1.1,null,t);
+}
+function bootsPeasant(g,t,f,ctx,cls,shaft,shoe,sole,band){
+  const lea=leaQ(t,cls);
+  shaft(lea,t>=4?.3:.24,.106,.096); shoe(lea); sole();
+  for(let i=0;i<(t>=4?4:3);i++){ const y=.03+i*.065; [-1,1].forEach(s=>add(g,G.box(.05,.01,.01),Mt.leather('#2a1a10'),[s*.01,y,.105],[0,0,s*.55])); } // amarração
+  if(t>=3) add(g,G.tor(.12,.04,8,22),Mt.hair(FUR[t]),[0,t>=4?.3:.24,0],[PI/2,0,0]); // punho de pele
+  if(t>=4) add(g,G.sph(.07,12,10,0,TAU,0,PI*.5),metQ(t,cls,ctx.race),[0,-.02,.17],[PI/2-.25,0,0],[1.05*f,1,.8]); // biqueira de ferro
+  if(t>=5) band(trimQ(t,cls),.16,.108,.011);
+  if(t>=6) band(metQ(t,cls,ctx.race),.08,.11,.016);
+  if(t>=7) band(inl('#ffd56a',ctx.glow,.7),.12,.108,.006);
+}
+function W_woodAxe(t,ctx,big){ // machado de lenhador: lâmina reta com martelo atrás; o de duas mãos é o machado grande de derrubar árvore
+  const g=new THREE.Group(), gc=ctx.glow, s=1+(t-1)*.07, k=s*(big?1.45:1);
+  const Lh=(big?1.02:.54)*s, hb=big?.34:.14, top=Lh-hb;
+  const hm = t===1 ? Mt.rust() : t===2 ? Mt.iron() : bladeQ(t,'none',ctx.race);
+  // cabo de madeira com leve curva e calombo na ponta
+  const haft=tubeAlong(g,[[0,-hb],[.008,-hb+Lh*.35],[-.004,-hb+Lh*.7],[0,top+.05*k]],big?.026:.021,woodQ(Math.max(1,t-1)));
+  add(g,G.sph(big?.032:.026,10,8),woodQ(Math.max(1,t-1)),[0,-hb,0],null,[1,1.3,1]);
+  if(t>=3){ for(let i=0;i<(big?7:4);i++) add(g,G.tor(big?.029:.024,.006,4,12),Mt.leather('#2a1a10'),[0,-hb+.05+i*.035,0],[PI/2,0,.35]); }
+  const hy=top-.03*k;
+  const bit=(t>=6?1.15:1);
+  const ah=shp([[-.05*k,.032*k],[.03*k,.04*k],[.11*k,.055*k*bit],[.175*k,.1*k*bit],[.19*k,.0],[.175*k,-.11*k*bit],[.11*k,-.06*k*bit],[.03*k,-.04*k],[-.05*k,-.032*k]]);
+  const head=add(g,sharp(ah,.016*k,.006),hm,[0,hy,0]);
+  add(g,G.box(.006,.2*k*bit,.034*k),t>=3?bladeQ(Math.min(7,t+1),'none',ctx.race):hm,[.188*k,hy,0]); // fio afiado
+  add(g,G.box(.028*k,.07*k,.05*k),hm,[-.055*k,hy,0]); // martelo
+  if(t>=4) add(g,G.cyl(.03,.03,.03,10),trimQ(t,'none'),[0,hy-.065*k,0]); // anel de latão
+  if(t>=5) motifs(g,ctx.RX,[.1*k,hy,.02*k],.7*k,null,t);
+  if(t>=7){ add(g,G.box(.005,.12*k,.02*k),inl('#ffd56a',gc,.75),[.12*k,hy,0]); auraOn(head,gc,.008); }
+  g.userData.h={up:[0,.94,.34],arm:[.3,-1,.55]}; g.userData.dir=[.55,.78,.28];
+  return g;
+}
+function W_buckler(t,ctx){ // escudo redondo de tábuas: o que um camponês teria
+  const g=new THREE.Group(), gc=ctx.glow, s=1+(t-1)*.06, r=.2*s;
+  const F=grp(g,[0,0,.07]);
+  const face=add(F,G.cyl(r,r,.026,40),Mt.wood(['','#8a6238','#7a5230','#6b4423','#5e3b1e','#523219','#462a15','#3c2412'][t]),null,[PI/2,0,0]);
+  for(let i=-2;i<=2;i++) add(F,G.box(.005,Math.sqrt(Math.max(0,r*r-(i*.075*s)**2))*2*.98,.03),Mt.plain('#2e1c0e'),[i*.075*s,0,.001]); // juntas das tábuas
+  if(t>=2) add(F,G.tor(r,.012,6,48),t>=5?trimQ(t,'none'):Mt.iron(),null,null,[1,1,1.4]);
+  add(F,G.sph(.055,16,10,0,TAU,0,PI*.5),t>=4?metQ(t,'none',ctx.race):Mt.iron(),[0,0,.012],[PI/2,0,0]); // umbo
+  if(t>=3) [-1,1].forEach(k=>add(F,G.box(.02,r*1.9,.008),Mt.iron(),[k*.11*s,0,.016])); // travessas de ferro
+  if(t>=4) for(let i=0;i<10;i++){ const a=i/10*TAU; add(F,G.sph(.011,6,6),t>=5?trimQ(t,'none'):Mt.iron(),[Math.cos(a)*r*.88,Math.sin(a)*r*.88,.016]); }
+  if(t>=6){ const tree=grp(F,[0,.1*s,.017]); [0,1,2].forEach(i=>add(tree,new THREE.CircleGeometry(.045-i*.01,3),Mt.plain('#2f4a24',.8),[0,i*.03,i*.001],[0,0,PI/2])); } // pinheiro pintado
+  if(t>=7){ add(F,G.tor(r*.62,.005,6,40),inl('#ffd56a',gc,.75),[0,0,.016]); auraOn(face,gc,.01); }
+  add(g,G.box(.04,.12,.025),Mt.leather('#2a1a10'),[0,0,.035]);
+  g.userData.h={up:[0,1,0],fwd:[-.32,0,1],arm:[-.32,-1,.5],kind:'shield'};
+  return g;
 }
 
 /* ---------- 🐎 MONTARIAS (Exp. 4) — 7 graus de fantasia, tema da classe ---------- */
